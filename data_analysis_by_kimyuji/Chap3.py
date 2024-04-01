@@ -457,9 +457,9 @@ titanic.Age.interpolate(method='nearest', limit_direction='forward').head(10)
 # - 변수가 1개인 경우는 박스플롯이나 히스토그램 사용, 2개 이상은 산점도 활용
 # - 이상값을 처리하는데는 다양한 방법이 있는데 적절한 상황에 맞는 방법을 고려해야 함
 
-# ## 박스플롯
+# ## 📌박스플롯
 
-# In[63]:
+# In[102]:
 
 
 from IPython.display import Image
@@ -490,7 +490,7 @@ plt.figure(figsize=(12, 4))
 sns.boxplot(x=titanic.Age)
 
 
-# ## IQR 기법으로 이상값 확인하기
+# ## 📌 IQR 기법으로 이상값 확인하기
 # 
 # - 시각화 기법을 통해 이상치가 어느 위치에 분포하는지 확인했으니 실제 이상값을 추출해야 함
 # 
@@ -531,7 +531,7 @@ def outlier_iqr(data, col):
 outlier_iqr(titanic, 'Fare')
 
 
-# ## 히스토그램
+# ## 📌히스토그램
 # - matplotlib의 axvspan을 활용하여 이상값의 범위를 강조하자
 
 # In[76]:
@@ -557,7 +557,7 @@ titanic[(titanic['Fare'] < upper) & (titanic['Fare'] > lower)]
 
 # ▶ 상황에 따라 데이터가 많다면 이상값을 제외한 데이터만 사용해서 데이터 분석을 하는 것이 좋은 결과를 가져올 수도 있음 !
 
-# ## 이상값 대체하기
+# ## 📌이상값 대체하기
 
 # #### 이상값을 평균값으로 대체하기
 # ##### 타이타닉의 원본 데이터에서 이상값에 해당하는 인덱스만 선택하여 그 값을 해당 변수의 평균값으로 저장하는 것
@@ -620,7 +620,7 @@ titanic.Name = titanic.Name.astype("string")
 titanic.Name.dtype
 
 
-# ## 문자열 분리하기
+# ## 📌문자열 분리하기
 
 # In[86]:
 
@@ -660,7 +660,7 @@ titanic.Name.str.split().str[1]
 titanic['Title'] = titanic.Name.str.split().str[1]
 
 
-# ## 문잣값 교체하기
+# ## 📌문잣값 교체하기
 # - 데이터에 불필요한 기호가 포함되어 있을 때 주로 활용
 # - replace() 사용
 
@@ -718,7 +718,7 @@ titanic['Title'] = titanic['Title'].replace(rareName, 'Rare', regex=False)
 titanic.Title.value_counts()
 
 
-# ## 정규표현식
+# ## 📌정규표현식
 # - 문자의 패턴을 인식하고 검색하여 필요한 정보를 쉽게 식별하거나 추출하는데 사용
 # - 문자 그대로를 입력하여 찾을 수 있지만 원하지 않는 문자도 포함되는 경우가 있음 -> 정규표현식 사용하는 것이 좋음
 # ---
@@ -733,46 +733,175 @@ titanic.Title.value_counts()
 
 # ### 정규표현식 필수 문법
 
-# In[ ]:
+# In[103]:
 
 
+Image('./정규표현식.png')
 
 
+# ### 판다스 정규 표현식 기초 활용
 
-# In[ ]:
-
-
-
+# In[105]:
 
 
-# In[ ]:
+#Name에서 호칭만 분리하기
+# ([A-Za-z]+)\.
+
+titanic['Title2'] = titanic.Name.str.extract(r' ([A-Za-z]+)\.' , expand=False)
+titanic.head()
 
 
+# In[106]:
 
 
+#Name이 'Z'로 시작하는 승객 데이터 추출하기
 
-# In[ ]:
-
-
-
+titanic[titanic.Name.str.count(r'(^Z.*)') == 1]
 
 
-# In[ ]:
+# In[107]:
 
 
+titanic.Name.str.count(r'(^Z.*)').sum()
 
 
-
-# In[ ]:
-
+# In[108]:
 
 
+#Name이 'Y'로 시작하는 승객 데이터 추출하기
+
+titanic[titanic.Name.str.match(r'^Y.*') == True]
 
 
-# In[ ]:
+# ## 📌문자 수 세기
+
+# In[109]:
 
 
+#타이타닉 Name 컬럼에서 공백을 포함한 모든 문자 수 세기
 
+titanic['Name'].str.count('')
+
+
+# In[110]:
+
+
+#타이타닉 Name 컬럼에서 단어 수 세기
+
+titanic['Name'].str.count(' ') + 1
+
+
+# In[111]:
+
+
+#타이타닉 Name 컬럼에서 특정 문자 수 세기
+
+titanic['Name'].str.count('a')
+
+
+# # 3.5 카테고리 데이터 처리
+# - 타이타닉 데이터셋에서 'Fare', 'Age', 'SibSp' 컬럼을 제외한 모든 컬럼은 카테고리 타입에 해당됨
+# - 카테고리 데이터 == 고윳값이 있는 데이터
+# 
+# #### [2가지의 카테고리 데이터]
+# 1. 범주형(명목형) - 사람의 혈액형이나 주소, 직업, 취미 등의 값의 높고 낮음의 순위가 없는 범주형
+# 2. 순서형 - 객실등급(Pclass)과 같이 크기나 순서 등의 고유 순위가 존재하는 순서형
+
+# ## 📌숫자 타입 데이터를 카테고리 타입으로 만들기
+# - 숫자 타입의 연속형이나 이산형 데이터는 그 자체로 활용하기도 하지만 범주형으로 변환해서 사용하기도 함
+# - 일정 구간(구간형) 또는 비율(비율형)으로 변환하면 데이터 파악이 수월 
+
+# ### 구간형으로 범주화하기
+
+# In[112]:
+
+
+print(titanic.Age.min())
+print(titanic.Age.max())
+
+
+# In[113]:
+
+
+# 5개의 연령대로 나이 컬럼 범주화하기
+
+bins = [0, 9, 18, 40, 60, 81] #나이 구분 포인트 지정하기
+labels = ['어린이', '청소년', '2030대', '4050대', '60대 이상'] #bins 보다 1개 더 적게 정의
+
+
+# In[114]:
+
+
+titanic['Age_band_cut'] = pd.cut(titanic['Age'], bins=bins, labels=labels)
+titanic.head()
+
+
+# In[115]:
+
+
+#생성한 범주 고유 개수 확인
+
+titanic.Age_band_cut.value_counts()
+
+
+# ### 비율형으로 범주화하기
+
+# In[116]:
+
+
+labels = ['어린이', '청소년', '2030대', '4050대', '60대 이상']
+titanic['Age_band_qcut'] = pd.qcut(titanic.Age, q=5 ,labels=labels)
+titanic.head()
+
+
+# ▶ 모든 구간이 일정 비율로 나누어졌기 때문에 cut() 함수와 다른 결과가 나옴
+
+# In[119]:
+
+
+# 각 구간의 시작과 끝 확인하기
+
+print(titanic[titanic.Age_band_qcut == '어린이'].min()['Age'])
+print(titanic[titanic.Age_band_qcut == '어린이'].max()['Age'])
+
+
+# ## 📌카테고리 데이터에 순서 만들기
+# - 카테고리 데이터에 순서를 지정하는 것 == 고유한 범줏값에 각각 다른 가중치를 부여하는 것
+# - 데이터 분석 시 가중치가 높은 범줏값에 더 높은 점수 또는 더 높은 순위를 부여한 데이터를 분석 모델링에 사용하면 결과에 더 큰 영향을 줄 수 있음
+# - 변수 특성에 따라 순서가 적합한 경우도 있음(아닌 경우도 있음)
+
+# In[120]:
+
+
+pd.Categorical([1, 2, 3, 1, 2, 3, 'a', 'b', 'c', 'a', 'b', 'c', np.nan])
+
+
+# In[121]:
+
+
+#카테고리 데이터에 codes 활용하여 각 데이터의 범주 코드를 확인
+
+pd.Categorical([1, 2, 3, 1, 2, 3, 'a', 'b', 'c', 'a', 'b', 'c', np.nan]).codes
+
+
+# In[122]:
+
+
+#카테고리 데이터에 순서 부여
+#categories 작은 순으로 입력
+
+pd.Categorical(['a', 'b', 'c', 'a', 'b', 'c'], ordered=True, categories=['c', 'b', 'a'])
+
+
+# In[124]:
+
+
+#타이타닉 데이터의 객실등급(Pclass) 컬럼을 순서형으로 변경하기
+#승객의 생존에 객실 등급의 높고 낮음이 영향을 끼칠 수 있다고 판단
+
+titanic['Pclass'] = titanic.Pclass.astype('category')
+titanic['Pclass'] = titanic.Pclass.cat.set_categories([3, 2, 1], ordered=True)
+titanic.Pclass.sort_values() #작은 데이터 순으로 정렬
 
 
 # In[ ]:
